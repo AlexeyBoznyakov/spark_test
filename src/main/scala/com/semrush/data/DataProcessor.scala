@@ -64,14 +64,20 @@ object DataProcessor {
     * }}}
     *
     * GroupBy function sends all data(for a certain key) to certain node and after that executes "map-reduce" operation.
-    * It can lead to OutOfMemoryException and heavy network traffic between nodes.
+    * It can lead to OutOfMemoryException and heavy network traffic between nodes. <br>
+    *
+    * Please note, Spark allows use mutable collections for first argument(accumulator) of functions (map and combine)
+    * to avoid frequent memory allocation. This implementation uses [[scala.collection.mutable.ArrayBuffer]]
+    * collection.
+    *
     * <p>
     * 2. For marking every event with SID, algorithm requires SORTED list of events for each key: domain + uid, because
     * there are some rules for SID generation(e.g. session is terminated after 30 min delay - last event required). <br>
     * Imagine that we process data from one year: <br>
     * 365 * 24 * 3600 (one click per second per user) = 32 mln <br>
     * It's very hard to sort and process 32 mln events on ONE node. According this the following decision was made: <br>
-    * Usually every user works before midnight. Nothing bad will happen if a session is terminated (false rule triggering) <br>
+    * Usually every user works before midnight. Nothing bad will happen if a session is terminated (false rule
+    * triggering) <br>
     * at midnight (or after month, decade etc) This rule can be written to the product documentation. <br>
     * As a result, events for certain days will be processed on different nodes (higher level of parallelism) <br>
     * Anyway if it's impossible(strong business rules) new cached mechanism is required(last event required between
