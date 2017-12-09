@@ -12,7 +12,22 @@ import org.json4s.{CustomSerializer, Formats, NoTypeHints}
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Class is intended to process events from user.
+  * Class is intended to process events from user (assign session id).
+  * <p>
+  * Session id assigning rules:
+  * 1. One session can only include events from the same user for the same domain.
+  * 2. Events in the session are sorted by the user's time, and not by the time of the server.
+  * 3. The user session is terminated in the following cases:
+  * 3.1. The user went to another site (the event is different from the session domain). In this case, a
+  * new session for another site begins.
+  * 3.2. The user went to the same site (the event and the domain sessions coincide), but the transition was made from
+  * another site (referer_domain is defined and differs from the domain session).
+  * 3.3. The interval between the events of the session is more than 30 minutes.
+  * 4. The user session is not terminated, and the event is considered to belong to the same session if:
+  * 4.1. The user visited the same site by a direct link (the event and the domain session are the same, and there
+  * is no referer_domain for the event).
+  * 4.2. The user entered the site by the link from the same site (the event and the domain sessions coincide,
+  * and the referer_domain in the event coincides with the domain session).
   *
   * @author Alexey Boznyakov
   */
@@ -52,16 +67,16 @@ object DataProcessor {
     * It can lead to OutOfMemoryException and heavy network traffic between nodes.
     * <p>
     * 2. For marking every event with SID, algorithm requires SORTED list of events for each key: domain + uid, because
-    * there are some rules for SID generation(e.g. session is broken after 30 minutes delay - last event required). <br>
+    * there are some rules for SID generation(e.g. session is terminated after 30 min delay - last event required). <br>
     * Imagine that we process data from one year: <br>
     * 365 * 24 * 3600 (one click per second per user) = 32 mln <br>
     * It's very hard to sort and process 32 mln events on ONE node. According this the following decision was made: <br>
-    * Usually every user works before midnight. Nothing bad will happen if a session breaks (false rule triggering) <br>
+    * Usually every user works before midnight. Nothing bad will happen if a session is terminated (false rule triggering) <br>
     * at midnight (or after month, decade etc) This rule can be written to the product documentation. <br>
     * As a result, events for certain days will be processed on different nodes (higher level of parallelism) <br>
     * Anyway if it's impossible(strong business rules) new cached mechanism is required(last event required between
     * two executions of spark job) <br>
-    * This implementation breaks session after midnight: <br>
+    * This implementation terminates session after midnight: <br>
     * In [[DataProcessor.convertToPair]] JSON data converted to pair: <br>
     * key - uid + domain + event date(without time) <br>
     * value - event data
