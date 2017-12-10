@@ -90,7 +90,7 @@ object DataProcessor extends Serializable {
     * 3. Default partitioner (HashPartitioner) was chosen, because there isn't information about events period or number
     * of users.
     * For example:
-    * If data consist of events from one year, developer can choose RangePartitioner with 356 partitions.
+    * If data consist of events from one year, developer can choose RangePartitioner with 365 partitions.
     *
     * @param rawRDD Raw RDD
     * @return RDD, which represent events from user with sid(session identifier) field.
