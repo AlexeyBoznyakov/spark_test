@@ -97,23 +97,36 @@ object DataProcessor extends Serializable {
     */
   def apply(rawRDD: RDD[String]): RDD[Event] = {
     rawRDD.map(str => convertToPair(str))
+      // make event groups (all events from for certain user, domain, day)
       .aggregateByKey(ArrayBuffer[Event]())((a, b) => a += b, (a, b) => a ++= b)
-      .flatMapValues(group => {
-        val sortedEvents = group.sortBy(v => v.clientStamp)
+      // mark events with SID for certain group
+      .flatMapValues(markEventsWithSid).values
+  }
 
-        // generate initial sid
-        val firstEvent = sortedEvents(0)
-        val initialSid = Event.makeSid(firstEvent.uid, firstEvent.domain, firstEvent.clientStamp)
+  /**
+    * Mark events with SID.
+    *
+    * Please attention: <br>
+    * This function should be used with grouped events for certain user, domain, day
+    *
+    * @param group events group (events for certain user, domain, day)
+    * @return collection with marked event
+    */
+  private def markEventsWithSid(group: IndexedSeq[Event]): Iterable[Event] = {
+    val sortedEvents = group.sortBy(v => v.clientStamp)
 
-        // initial value for foldLeft is tuple(emptyList, timeOfLastEvent, initialSid)
-        sortedEvents.foldLeft((List[Event](), firstEvent.clientStamp, initialSid))((acc, cEvent) => {
-          var currentSid = acc._3
-          if (isSessionComplete(cEvent, acc._2)) {
-            currentSid = Event.makeSid(cEvent.uid, cEvent.domain, cEvent.clientStamp)
-          }
-          (cEvent.copy(sid = currentSid) :: acc._1, cEvent.clientStamp, currentSid)
-        })._1
-      }).values
+    // generate initial sid
+    val firstEvent = sortedEvents(0)
+    val initialSid = Event.makeSid(firstEvent.uid, firstEvent.domain, firstEvent.clientStamp)
+
+    // initial value for foldLeft is tuple(emptyList, timeOfLastEvent, initialSid)
+    sortedEvents.foldLeft((List[Event](), firstEvent.clientStamp, initialSid))((acc, cEvent) => {
+      var currentSid = acc._3
+      if (isSessionComplete(cEvent, acc._2)) {
+        currentSid = Event.makeSid(cEvent.uid, cEvent.domain, cEvent.clientStamp)
+      }
+      (cEvent.copy(sid = currentSid) :: acc._1, cEvent.clientStamp, currentSid)
+    })._1
   }
 
   /**
