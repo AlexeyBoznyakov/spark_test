@@ -100,7 +100,8 @@ object DataProcessor extends Serializable {
       // make event groups (all events from for certain user, domain, day)
       .aggregateByKey(ArrayBuffer[Event]())((a, b) => a += b, (a, b) => a ++= b)
       // mark events with SID for certain group
-      .flatMapValues(markEventsWithSid).values
+      .flatMapValues(markEventsWithSid)
+      .values
   }
 
   /**
@@ -137,8 +138,8 @@ object DataProcessor extends Serializable {
     * @return is a session complete (true - yes, false - no)
     */
   private def isSessionComplete(event: Event, timeOfLastEvent: Date): Boolean = {
-    val domain = event.refererDomain
-    (domain.isDefined && !event.domain.equals(domain.get)) ||
+    val refererDomain = event.refererDomain
+    (refererDomain.isDefined && !event.domain.equals(refererDomain.get)) ||
       (event.clientStamp.getTime - timeOfLastEvent.getTime > SESSION_TIMEOUT)
   }
 
