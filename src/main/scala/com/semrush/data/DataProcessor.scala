@@ -31,7 +31,7 @@ import scala.collection.mutable.ArrayBuffer
   *
   * @author Alexey Boznyakov
   */
-object DataProcessor {
+object DataProcessor extends Serializable {
 
   /**
     * Session timeout (in milliseconds) - 30 minutes.
