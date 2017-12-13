@@ -12,7 +12,7 @@ import java.util.Date
   * @param referer         URL from which an user moved (may be absent in case of a direct call)
   * @param refererDomain   TLD of the site, received from referer (may be absent in case of a direct call).
   * @param statusCode      status code
-  * @param country_code    country code
+  * @param countryCode     country code
   * @param browser         browser
   * @param operatingSystem operation system
   * @param uid             user identifier
@@ -26,7 +26,7 @@ case class Event(serverStamp: Date,
                  referer: Option[String],
                  refererDomain: Option[String],
                  statusCode: Int,
-                 country_code: String,
+                 countryCode: String,
                  browser: String,
                  operatingSystem: String,
                  uid: String,
