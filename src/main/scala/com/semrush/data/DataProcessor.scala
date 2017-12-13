@@ -122,10 +122,11 @@ object DataProcessor extends Serializable {
 
     // initial value for foldLeft is tuple(emptyList, timeOfLastEvent, initialSid)
     sortedEvents.foldLeft((List[Event](), firstEvent.clientStamp, initialSid))((acc, cEvent) => {
-      var currentSid = acc._3
-      if (isSessionComplete(cEvent, acc._2)) {
-        currentSid = Event.makeSid(cEvent.uid, cEvent.domain, cEvent.clientStamp)
-      }
+      val currentSid = if (!isSessionComplete(cEvent, acc._2))
+        acc._3
+      else
+        Event.makeSid(cEvent.uid, cEvent.domain, cEvent.clientStamp)
+
       (cEvent.copy(sid = currentSid) :: acc._1, cEvent.clientStamp, currentSid)
     })._1
   }
