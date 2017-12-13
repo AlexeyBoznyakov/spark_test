@@ -31,7 +31,7 @@ case class Event(serverStamp: Date,
                  operatingSystem: String,
                  uid: String,
                  sid: String
-                ) extends Serializable
+                )
 
 /**
   * Companion object.
