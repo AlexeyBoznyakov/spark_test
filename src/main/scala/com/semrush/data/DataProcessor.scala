@@ -36,7 +36,7 @@ object DataProcessor extends Serializable {
   /**
     * Session timeout (in milliseconds) - 30 minutes.
     */
-  private val SESSION_TIMEOUT: Int = 30 * 60 * 1000
+  private val SessionTimeout: Int = 30 * 60 * 1000
 
   /**
     * Function is intended to generate RDD of events marked by session id (sid).
@@ -141,7 +141,7 @@ object DataProcessor extends Serializable {
   private def isSessionComplete(event: Event, timeOfLastEvent: Date): Boolean = {
     val refererDomain = event.refererDomain
     (refererDomain.isDefined && !event.domain.equals(refererDomain.get)) ||
-      (event.clientStamp.getTime - timeOfLastEvent.getTime > SESSION_TIMEOUT)
+      (event.clientStamp.getTime - timeOfLastEvent.getTime > SessionTimeout)
   }
 
   /**
